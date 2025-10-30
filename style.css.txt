@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  background: linear-gradient(to bottom, #00111a, #000);
+  font-family: 'Arial', sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+#ui {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+}
+button {
+  background: #2b5;
+  border: none;
+  color: #fff;
+  padding: 10px 15px;
+  margin-top: 5px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: bold;
+}
+button:hover {
+  background: #3d7;
+}
