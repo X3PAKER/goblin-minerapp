@@ -1,20 +1,580 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Goblin Miner</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>YM Legend Miner — Full UI</title>
+
+<!-- Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg-dark:#070607;
+    --panel:#0f0f10;
+    --gold:#f5c542;
+    --gold-2:#d09b1f;
+    --muted:rgba(245,197,66,0.18);
+    --glass: rgba(255,255,255,0.02);
+    --accent:#ffd86b;
+    --text:#f5e8b8;
+  }
+
+  /* ===== base ===== */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-dark),#0d0d0e);font-family:'Poppins',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+  .app {
+    max-width:980px;
+    margin:28px auto;
+    padding:18px;
+  }
+
+  header {
+    display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;
+  }
+  .brand {display:flex;align-items:center;gap:12px}
+  .logo {
+    width:56px;height:56px;border-radius:12px;
+    background:linear-gradient(135deg,var(--gold),var(--gold-2));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;box-shadow:0 6px 24px rgba(209,155,31,0.12);
+  }
+  h1{font-size:18px;margin:0}
+  .sub{font-size:12px;color:rgba(245,232,184,0.75)}
+
+  /* ===== layout ===== */
+  .layout {
+    display:grid;
+    grid-template-columns: 340px 1fr;
+    gap:18px;
+  }
+
+  /* ===== left column (controls, profile, menu) ===== */
+  .left {
+    background:var(--panel);
+    border-radius:14px;
+    padding:14px;
+    border:1px solid var(--muted);
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+  }
+
+  .profile {
+    display:flex;gap:12px;align-items:center;margin-bottom:12px;
+  }
+  .avatar {
+    width:64px;height:64px;border-radius:12px;background:linear-gradient(180deg,#fff9c4,#f5c542);display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;
+    box-shadow:0 8px 24px rgba(245,197,66,0.08);
+  }
+  .userInfo {flex:1;text-align:left}
+  .userInfo .name{font-weight:700}
+  .userInfo .id{font-size:12px;color:rgba(245,232,184,0.75)}
+
+  .balances {
+    display:flex;flex-direction:column;gap:8px;margin-bottom:12px;
+  }
+  .balRow {display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.015));border:1px solid var(--muted)}
+  .balRow .label{font-size:13px;color:rgba(245,232,184,0.9)}
+  .balRow .val{font-weight:700;color:var(--gold)}
+
+  .menu {
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;
+  }
+  .menu button {padding:10px;border-radius:8px;border:1px solid rgba(245,197,66,0.06);background:transparent;color:var(--gold);cursor:pointer}
+  .menu button.active{background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#000;box-shadow:0 10px 30px rgba(209,155,31,0.08)}
+
+  .left .small {font-size:12px;color:rgba(245,232,184,0.7);margin-top:12px}
+
+  /* ===== right column (main area) ===== */
+  .main {
+    background:var(--panel);
+    border:1px solid var(--muted);
+    border-radius:14px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,0.6);
+    display:flex;flex-direction:column;gap:12px;
+  }
+
+  /* top info row */
+  .infoRow {display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .infoLeft {display:flex;flex-direction:column;gap:6px}
+  .infoRight {display:flex;gap:8px;align-items:center}
+
+  .chip {
+    padding:8px 12px;border-radius:10px;background:linear-gradient(90deg,#111,rgba(255,255,255,0.01));border:1px solid var(--muted);font-weight:600;
+  }
+
+  /* main canvas and controls */
+  .canvasWrap {display:flex;gap:12px;align-items:flex-start}
+  .canvas {
+    width:520px;height:360px;background:linear-gradient(180deg,#080808,#141414);border-radius:12px;border:1px solid rgba(245,197,66,0.05);position:relative;overflow:visible;padding:10px;
+  }
+
+  /* panel to the right of canvas */
+  .sidePanel {
+    width:100%;max-width:200px;display:flex;flex-direction:column;gap:10px;
+  }
+
+  .panelCard {
+    background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
+    border-radius:10px;padding:10px;border:1px solid var(--muted);
+  }
+
+  .controls {display:flex;gap:8px;margin-top:6px}
+  .controls button {padding:10px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#000;font-weight:700;cursor:pointer}
+
+  /* miner animation elements (SVG inserted) */
+  .tokens {position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;overflow:visible;z-index:20}
+
+  /* token style for falling tokens created by JS */
+  .token {
+    position:absolute;left:50%;transform:translateX(-50%);min-width:24px;height:24px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #fff9c4,var(--gold));
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#111;font-size:12px;
+    box-shadow:0 10px 20px rgba(245,197,66,0.18);
+    pointer-events:none;z-index:30;
+  }
+
+  /* action list in side panel */
+  .action {display:flex;flex-direction:column;gap:8px}
+  .action button {background:transparent;border:1px solid rgba(245,197,66,0.12);color:var(--gold);padding:8px;border-radius:8px}
+
+  /* footer small */
+  footer {margin-top:10px;font-size:12px;color:rgba(245,232,184,0.6);text-align:center}
+
+  /* responsive */
+  @media (max-width:920px){
+    .layout{grid-template-columns:1fr;max-width:92%;margin:10px auto}
+    .canvas{width:100%;height:300px}
+    .left{order:2}
+    .main{order:1}
+    .sidePanel{flex-direction:row;flex-wrap:wrap}
+  }
+</style>
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="gameCanvas"></canvas>
-    <div id="ui">
-      <h2>YM: <span id="ymBalance">0</span></h2>
-      <button id="mineBtn">⛏️ Đào Token</button>
-      <button id="upgradeBtn">🔧 Nâng cấp</button>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">YM</div>
+        <div>
+          <h1>YM Legend Miner</h1>
+          <div class="sub">Black & Gold mining dashboard</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="chip">Lv: <strong id="level">1</strong></div>
+        <div class="chip">Speed: <strong id="speedChip">1 YM/s</strong></div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- LEFT -->
+      <aside class="left">
+        <div class="profile">
+          <div class="avatar" id="avatar">U</div>
+          <div class="userInfo">
+            <div class="name" id="username">user_12345</div>
+            <div class="id" id="userid">ID: user_12345</div>
+          </div>
+        </div>
+
+        <div class="balances">
+          <div class="balRow"><div class="label">YM</div><div class="val" id="ymBal">0</div></div>
+          <div class="balRow"><div class="label">USDT</div><div class="val" id="usdtBal">0</div></div>
+        </div>
+
+        <div class="menu">
+          <button id="menuMiner" class="active">Miner</button>
+          <button id="menuSwap">Swap</button>
+          <button id="menuWithdraw">Withdraw</button>
+          <button id="menuShop">Shop</button>
+        </div>
+
+        <div class="small">Tips: Bấm "Bắt đầu đào" để bắt đầu animation. Claim để gửi lên server.</div>
+      </aside>
+
+      <!-- RIGHT -->
+      <main class="main">
+        <div class="infoRow">
+          <div class="infoLeft">
+            <div style="font-size:14px;font-weight:700">Miner Dashboard</div>
+            <div style="font-size:12px;color:rgba(245,232,184,0.8)">Theo dõi trạng thái đào, swap và rút tiền</div>
+          </div>
+          <div class="infoRight">
+            <div class="chip">Online</div>
+            <div class="chip">Wallet</div>
+          </div>
+        </div>
+
+        <div class="canvasWrap">
+          <!-- Canvas with SVG animation -->
+          <div class="canvas" id="canvas">
+            <!-- We'll insert an SVG scene here (vector pickaxe + nugget) -->
+            <!-- Inline SVG (vector) -->
+            <svg id="svgScene" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+              <defs>
+                <linearGradient id="gGold" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="#ffe07a"/>
+                  <stop offset="1" stop-color="#d09b1f"/>
+                </linearGradient>
+                <linearGradient id="gDiamond" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="#bcd4ff"/>
+                  <stop offset="1" stop-color="#6a86ff"/>
+                </linearGradient>
+              </defs>
+
+              <!-- ground shadow -->
+              <ellipse cx="210" cy="286" rx="140" ry="18" fill="rgba(0,0,0,0.5)"/>
+
+              <!-- pickaxe group -->
+              <g id="pickGroup" transform="translate(120,40)">
+                <rect x="80" y="40" width="8" height="150" rx="4" fill="#7a4f22" />
+                <rect x="74" y="32" width="20" height="18" rx="3" fill="#cfcfd6" />
+                <path id="bladePath" d="M90 30 C60 28 40 44 46 62 C64 82 110 60 130 50" fill="url(#gDiamond)" opacity="0.98" transform="rotate(-20 90 50)"/>
+              </g>
+
+              <!-- nugget group -->
+              <g id="nuggetGroup" transform="translate(210,170)">
+                <g id="diamond" transform="translate(-10,-40) scale(1)">
+                  <polygon points="-14,-2 0,-30 14,-2 0,16" fill="url(#gDiamond)" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/>
+                  <polygon points="-6,-1 0,-15 6,-1 0,6" fill="#ffffff" opacity="0.2" />
+                </g>
+
+                <g id="goldShards" transform="translate(0,0)">
+                  <path d="M-12,12 L-2,-6 L10,-10 L18,2 L6,24 Z" fill="url(#gGold)" stroke="#ffd76f" stroke-width="0.6"/>
+                  <path d="M20,6 L28,-6 L40,2 L30,18 Z" fill="url(#gGold)" stroke="#ffd76f" stroke-width="0.5"/>
+                  <path d="M-30,6 L-20,-10 L-8,2 L-18,20 Z" fill="url(#gGold)" stroke="#ffd76f" stroke-width="0.5"/>
+                </g>
+
+                <path id="rock" d="M-60,30 L-30,4 L-10,30 L20,12 L56,34 L30,54 L-10,60 Z" fill="#afb3c6" stroke="#8f93a0" stroke-width="1"/>
+              </g>
+
+              <!-- flash -->
+              <g id="flash" transform="translate(210,140)" opacity="0">
+                <circle r="6" fill="white" opacity="0.95"/>
+              </g>
+            </svg>
+
+            <!-- tokens (DOM elements that will fall) -->
+            <div class="tokens" id="tokensContainer"></div>
+          </div>
+
+          <!-- right side small panels -->
+          <div class="sidePanel">
+            <div class="panelCard">
+              <div style="font-size:13px;font-weight:700">Controls</div>
+              <div style="font-size:12px;color:rgba(245,232,184,0.75);margin-top:8px">Start / Stop mining and quick actions.</div>
+              <div class="controls" style="margin-top:10px">
+                <button id="startBtnMain">Bắt đầu đào</button>
+                <button id="stopBtnMain" style="background:transparent;border:1px solid var(--muted);color:var(--gold)">Dừng</button>
+              </div>
+            </div>
+
+            <div class="panelCard">
+              <div style="font-size:13px;font-weight:700">Quick Actions</div>
+              <div class="action" style="margin-top:8px">
+                <button id="claimBtn">Claim YM</button>
+                <button id="upgradeBtn">Nâng cấp</button>
+                <button id="refillBtn">Nạp</button>
+              </div>
+            </div>
+
+            <div class="panelCard">
+              <div style="font-size:13px;font-weight:700">Swap / Withdraw</div>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+                <input id="swapYM" placeholder="Số YM muốn đổi" type="number" style="padding:8px;border-radius:8px;background:#0b0b0b;border:1px solid var(--muted);color:var(--text)">
+                <button id="swapBtn" style="background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#000">Swap</button>
+                <input id="walletAddr" placeholder="Địa chỉ ví USDT" style="padding:8px;border-radius:8px;background:#0b0b0b;border:1px solid var(--muted);color:var(--text)">
+                <input id="withdrawAmount" placeholder="Số USDT" type="number" style="padding:8px;border-radius:8px;background:#0b0b0b;border:1px solid var(--muted);color:var(--text)">
+                <button id="withdrawBtn" style="background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#000">Rút</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- stats / logs -->
+        <div style="display:flex;gap:12px">
+          <div class="panelCard" style="flex:1">
+            <div style="font-weight:700;margin-bottom:6px">Thông tin đào</div>
+            <div style="font-size:13px;color:rgba(245,232,184,0.85)">Timer: <span id="timer">⏳ 24:00:00</span></div>
+            <div style="font-size:13px;color:rgba(245,232,184,0.85)">Tốc độ: <span id="speedTxt">1 YM / giây</span></div>
+            <div style="font-size:13px;color:rgba(245,232,184,0.85)">Đã đào: <span id="earned">0 YM</span></div>
+          </div>
+
+          <div class="panelCard" style="width:220px">
+            <div style="font-weight:700;margin-bottom:6px">Nâng cấp</div>
+            <div style="font-size:13px;color:rgba(245,232,184,0.85)">Level: <strong id="levelTxt">1</strong></div>
+            <div style="margin-top:8px;"><button id="buyAuto" style="width:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#000">Mua Auto Miner</button></div>
+          </div>
+        </div>
+
+        <footer>© YM Legend Miner — demo interface</footer>
+      </main>
     </div>
   </div>
-  <script src="script.js"></script>
+
+<script>
+/* ================= SETUP / STATE ================= */
+const API = ""; // đặt API endpoint nếu có
+const username = localStorage.getItem("ymUser") || "user_" + Math.floor(Math.random()*90000+10000);
+localStorage.setItem("ymUser", username);
+
+// UI refs
+const ymBalEl = document.getElementById('ymBal');
+const usdtBalEl = document.getElementById('usdtBal');
+const usernameEl = document.getElementById('username');
+const useridEl = document.getElementById('userid');
+const avatarEl = document.getElementById('avatar');
+
+usernameEl.innerText = username;
+useridEl.innerText = "ID: " + username;
+avatarEl.innerText = username.slice(0,1).toUpperCase();
+
+// mining state
+let minedYM = 0;
+let seconds = 86400; // 24h default countdown placeholder
+let mining = false;
+let mineInterval = null;
+let spawnTimer = null;
+
+// references for animation
+const pickGroup = document.getElementById('pickGroup');
+const nuggetGroup = document.getElementById('nuggetGroup');
+const flash = document.getElementById('flash');
+const tokensContainer = document.getElementById('tokensContainer');
+
+// buttons
+const startBtnMain = document.getElementById('startBtnMain');
+const stopBtnMain = document.getElementById('stopBtnMain');
+const startBtn = document.getElementById('startBtnMain'); // alias
+const stopBtn = document.getElementById('stopBtnMain');
+const claimBtn = document.getElementById('claimBtn');
+const upgradeBtn = document.getElementById('upgradeBtn');
+const refillBtn = document.getElementById('refillBtn');
+const swapBtn = document.getElementById('swapBtn');
+const withdrawBtn = document.getElementById('withdrawBtn');
+const buyAutoBtn = document.getElementById('buyAuto');
+
+const timerEl = document.getElementById('timer');
+const earnedEl = document.getElementById('earned');
+const levelEl = document.getElementById('level');
+const levelTxt = document.getElementById('levelTxt');
+const speedChip = document.getElementById('speedChip');
+const speedTxt = document.getElementById('speedTxt');
+
+let userBalance = { ym: 0, usdt: 0 };
+let level = 1;
+let speedYM = 1; // YM per second
+
+/* ============== Utility / UI update ============== */
+function updateUI(){
+  timerEl.innerText = "⏳ " + formatTime(seconds);
+  earnedEl.innerText = `${minedYM} YM (≈ $${(minedYM/1000).toFixed(4)})`;
+  ymBalEl.innerText = userBalance.ym;
+  usdtBalEl.innerText = userBalance.usdt;
+  levelEl.innerText = level;
+  levelTxt.innerText = level;
+  speedChip.innerText = `${speedYM} YM/s`;
+  speedTxt.innerText = `${speedYM} YM / giây`;
+}
+
+function formatTime(s){
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');
+}
+
+/* ============== Animation helpers ============== */
+function spawnTokenVisual(){
+  const canvasRect = document.getElementById('canvas').getBoundingClientRect();
+  // get approximate center of nugget in canvas coordinate
+  const left = canvasRect.width * 0.5; // center approx
+  const startTop = canvasRect.height * 0.45; // near nugget top
+  const token = document.createElement('div');
+  token.className = 'token';
+  token.textContent = 'YM';
+  token.style.left = left + 'px';
+  token.style.top = startTop + 'px';
+  tokensContainer.appendChild(token);
+
+  // animate fall
+  const duration = 900;
+  const start = performance.now();
+  const endTop = startTop + canvasRect.height * 0.35;
+
+  function anim(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const curTop = startTop + (endTop - startTop) * eased;
+    token.style.top = curTop + 'px';
+    token.style.opacity = String(1 - 0.95 * t);
+    if(t < 1) requestAnimationFrame(anim); else token.remove();
+  }
+  requestAnimationFrame(anim);
+}
+
+function doHitVisual(){
+  // nugget bounce
+  nuggetGroup.classList.remove('hit');
+  void nuggetGroup.offsetWidth;
+  nuggetGroup.classList.add('hit');
+
+  // flash
+  flash.setAttribute('opacity','1');
+  flash.classList.remove('flash');
+  void flash.offsetWidth;
+  flash.classList.add('flash');
+}
+
+/* ============== Mining control ============== */
+function startMining(){
+  if(mining) return;
+  mining = true;
+  pickGroup.classList.add('swing');
+
+  // immediate hit and token
+  doHitVisual();
+  for(let i=0;i<speedYM;i++){ spawnTokenVisual(); minedYM += 1; }
+  updateUI();
+
+  // repeated hits aligned with swing animation
+  spawnTimer = setInterval(()=> {
+    doHitVisual();
+    for(let i=0;i<speedYM;i++){ spawnTokenVisual(); minedYM += 1; }
+    updateUI();
+  }, 900);
+
+  // mining state accumulation (seconds and UI)
+  mineInterval = setInterval(()=>{
+    if(seconds <= 0){
+      stopMining();
+      claimBtn.disabled = false;
+      return;
+    }
+    seconds--;
+    updateUI();
+  }, 1000);
+}
+
+function stopMining(){
+  if(!mining) return;
+  mining = false;
+  pickGroup.classList.remove('swing');
+  clearInterval(spawnTimer); spawnTimer = null;
+  clearInterval(mineInterval); mineInterval = null;
+}
+
+/* ============== Button events ============== */
+startBtn.addEventListener('click', ()=> {
+  startMining();
+  // small disable to prevent multiple rapid clicks
+  startBtn.disabled = true;
+  setTimeout(()=> startBtn.disabled = false, 500);
+});
+stopBtn.addEventListener('click', ()=> stopMining());
+
+// Claim: send minedYM to server (mock)
+claimBtn.addEventListener('click', async ()=> {
+  if(minedYM <= 0) return alert('Không có YM để claim');
+  try {
+    // mock call — replace with real API call
+    // const res = await fetch(API + '/api/credit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, ym_amount: minedYM})});
+    // const j = await res.json();
+    // if(j.ok){ userBalance.ym = j.ym; ... }
+    // For demo: just add to local balance
+    userBalance.ym += minedYM;
+    minedYM = 0;
+    seconds = 86400; // reset demo timer
+    updateUI();
+    alert('Claim thành công (demo)!');
+  } catch(e){
+    console.error(e);
+    alert('Claim lỗi');
+  }
+});
+
+// Swap
+swapBtn.addEventListener('click', async ()=> {
+  const ym = parseInt(document.getElementById('swapYM').value || 0);
+  if(!ym || ym <= 0) return alert('Nhập số YM hợp lệ');
+  if(userBalance.ym < ym) return alert('Số dư YM không đủ');
+  // mock swap rate: 1000 YM = 1 USDT
+  const usdt = (ym / 1000).toFixed(4);
+  userBalance.ym -= ym;
+  userBalance.usdt += parseFloat(usdt);
+  updateUI();
+  alert(`Đổi ${ym} YM → ${usdt} USDT (demo)`);
+});
+
+// Withdraw
+withdrawBtn.addEventListener('click', async ()=>{
+  const addr = document.getElementById('walletAddr').value.trim();
+  const amt = parseFloat(document.getElementById('withdrawAmount').value || 0);
+  if(!addr || !amt) return alert('Điền đủ thông tin');
+  if(userBalance.usdt < amt) return alert('Số dư USDT không đủ');
+  // mock: subtract and show id
+  userBalance.usdt -= amt;
+  updateUI();
+  alert('Tạo lệnh rút thành công! (demo) ID: ' + Math.floor(Math.random()*900000+100000));
+});
+
+// Upgrade / refill / auto miner
+upgradeBtn.addEventListener('click', ()=>{
+  // mock: spend YM to upgrade speed
+  const cost = level * 100; // example: cost in YM
+  if(userBalance.ym < cost) return alert(`Cần ${cost} YM để nâng cấp`);
+  userBalance.ym -= cost;
+  level++;
+  speedYM = Math.min(10, speedYM + 1); // increase speed
+  updateUI();
+  alert('Nâng cấp thành công (demo)!');
+});
+
+refillBtn.addEventListener('click', ()=>{
+  // mock refill: give some YM for demo
+  userBalance.ym += 200;
+  updateUI();
+  alert('Nạp thành công (demo) +200 YM');
+});
+
+buyAutoBtn.addEventListener('click', ()=>{
+  if(userBalance.ym < 500) return alert('Cần 500 YM để mua Auto Miner (demo)');
+  userBalance.ym -= 500;
+  updateUI();
+  alert('Mua Auto Miner thành công (demo). Auto mining chưa thực hiện trong demo.)');
+});
+
+/* simple menu tab logic */
+document.getElementById('menuMiner').addEventListener('click', ()=> setActiveMenu('miner'));
+document.getElementById('menuSwap').addEventListener('click', ()=> setActiveMenu('swap'));
+document.getElementById('menuWithdraw').addEventListener('click', ()=> setActiveMenu('withdraw'));
+document.getElementById('menuShop').addEventListener('click', ()=> setActiveMenu('shop'));
+
+function setActiveMenu(id){
+  // visual active classes
+  document.querySelectorAll('.menu button').forEach(b=>b.classList.remove('active'));
+  if(id === 'miner') document.getElementById('menuMiner').classList.add('active');
+  if(id === 'swap') document.getElementById('menuSwap').classList.add('active');
+  if(id === 'withdraw') document.getElementById('menuWithdraw').classList.add('active');
+  if(id === 'shop') document.getElementById('menuShop').classList.add('active');
+  // simple content switch (for demo we won't change main content)
+  alert(`Chuyển sang: ${id} (demo UI)`);
+}
+
+/* ============== Refresh loop (balance update etc) ============== */
+function refreshFromServerMock(){
+  // in real use, call API to refresh balances:
+  // fetch(API + '/api/balance?username=' + username).then(...)
+  // Here demo: nothing
+  updateUI();
+}
+setInterval(refreshFromServerMock, 8000);
+updateUI();
+
+/* allow space toggles mining */
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){
+    e.preventDefault();
+    if(mining) stopMining(); else startMining();
+  }
+});
+</script>
 </body>
 </html>
